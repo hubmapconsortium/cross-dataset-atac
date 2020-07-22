@@ -5,7 +5,7 @@ label: Annotates each h5ad file with dataset and tissue type, then concatenates
 hints:
   DockerRequirement:
     dockerPull: hubmap/cross-dataset-atac:latest
-baseCommand: /opt/parse_sprm_output.py
+baseCommand: /opt/parse_atac_output.py
 
 inputs:
   data_dir:
@@ -16,7 +16,7 @@ inputs:
 
 outputs:
   csv_files:
-    type: File
+    type: File[]
     outputBinding:
       glob: "*.csv"
     doc: csvs containing cell level, group level, and gene level data from across atac-seq datasets

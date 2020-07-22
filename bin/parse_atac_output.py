@@ -14,7 +14,7 @@ def get_dataset(cell_by_gene_file: Path)->str:
 
 def get_tissue_type(dataset_directory: Path) -> str:
 
-    data_set_spreadsheet = "/home/sean/Documents/code/cross-dataset-diffexpr/bin/spreadsheet.csv"
+    data_set_spreadsheet = "/opt/spreadsheet.csv"
 
     data_set_dir = fspath(dataset_directory)
 

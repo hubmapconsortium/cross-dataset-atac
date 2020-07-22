@@ -11,11 +11,11 @@ inputs:
 
 outputs:
   csv_files:
-    outputSource: join-annotate/csv_files
+    outputSource: annotate-concatenate/csv_files
     type: File[]
 
 steps:
-  - id: join-annotate
+  - id: annotate-concatenate
     in:
       - id: data_dir
         source: data_dir
@@ -23,5 +23,5 @@ steps:
     out:
       - csv_files
 
-    run: steps/join-annotate.cwl
+    run: steps/annotate-concatenate.cwl
     label: "Annotates and concatenates csv and hdf5 files, writes out csv_files"
