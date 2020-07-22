@@ -2,7 +2,7 @@
 
 class: Workflow
 cwlVersion: v1.0
-label: Pipeline for parsing and aggregating atac output across codex datasets
+label: Pipeline for parsing and aggregating atac output across datasets
 
 inputs:
   data_dir:
@@ -10,9 +10,9 @@ inputs:
     type: Directory
 
 outputs:
-  db_file:
-    outputSource: join-annotate/db_file
-    type: File
+  csv_files:
+    outputSource: join-annotate/csv_files
+    type: File[]
 
 steps:
   - id: join-annotate
@@ -21,7 +21,7 @@ steps:
         source: data_dir
 
     out:
-      - db_file
+      - csv_files
 
     run: steps/join-annotate.cwl
-    label: "Annotates and concatenates csv and hdf5 files, writes out relational db"
+    label: "Annotates and concatenates csv and hdf5 files, writes out csv_files"

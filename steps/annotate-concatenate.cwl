@@ -4,7 +4,7 @@ label: Annotates each h5ad file with dataset and tissue type, then concatenates
 
 hints:
   DockerRequirement:
-    dockerPull: hubmap/cross-dataset-sprm:latest
+    dockerPull: hubmap/cross-dataset-atac:latest
 baseCommand: /opt/parse_sprm_output.py
 
 inputs:
@@ -15,8 +15,8 @@ inputs:
       position: 1
 
 outputs:
-  db_file:
+  csv_files:
     type: File
     outputBinding:
-      glob: "codex.db"
-    doc: Annotated, concatenated dataset in PostgreSQL relational database
+      glob: "*.csv"
+    doc: csvs containing cell level, group level, and gene level data from across atac-seq datasets
