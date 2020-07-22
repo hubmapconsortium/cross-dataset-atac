@@ -79,25 +79,6 @@ def make_adata(modality_df: pd.DataFrame):
 
     return adata
 
-def get_gene_groupings(names_and_pvals, cutoff, marker_cutoff):
-
-    gene_groupings = {}
-    marker_gene_groupings = {}
-
-    for n_p in names_and_pvals:
-
-        if n_p[1] < cutoff:
-            if n_p[0] not in gene_groupings.keys():
-                gene_groupings[n_p[0]] = []
-            gene_groupings[n_p[0]].append(condition)
-
-        if n_p[1] < marker_cutoff:
-            if n_p[0] not in marker_gene_groupings.keys():
-                marker_gene_groupings[n_p[0]] = []
-            marker_gene_groupings[n_p[0]].append(condition)
-
-    return gene_groupings, marker_gene_groupings
-
 def get_gene_rows(gene_groupings:Dict[str, List[str]], marker_gene_groupings:Dict[str, List[str]]):
 
     gene_rows = []
@@ -115,6 +96,11 @@ def get_gene_rows(gene_groupings:Dict[str, List[str]], marker_gene_groupings:Dic
 
 def get_rows(adata:anndata.AnnData, groupings:List[str])->List[Dict]:
 
+    group_rows = []
+
+    gene_groupings = {}
+    marker_gene_groupings = {}
+
     cutoff = 0.9
     marker_cutoff = .001
 
@@ -125,7 +111,7 @@ def get_rows(adata:anndata.AnnData, groupings:List[str])->List[Dict]:
     for group_by in groupings:
     #for each thing we want to group by
 
-        sc.tl.rank_genes_groups(adata, group_by, method='t-test', rankby_abs=True, n_genes=num_genes)
+        sc.tl.rank_genes_groups(adata, group_by, method='t-test', rankby_abs=True, n_geness=num_genes)
 
         #get the group_ids and then the gene_names and scores for each
         for group_id in cell_df[group_by].unique():
@@ -139,16 +125,26 @@ def get_rows(adata:anndata.AnnData, groupings:List[str])->List[Dict]:
             pvals = adata.uns['rank_genes_groups']['pvals'][group_id]
             names_and_pvals = zip(gene_names, pvals)
 
-            gene_groupings, marker_gene_groupings = get_gene_groupings(names_and_pvals, cutoff, marker_cutoff)
+            for n_p in names_and_pvals:
+
+                if n_p[1] < cutoff:
+                    if n_p[0] not in gene_groupings.keys():
+                        gene_groupings[n_p[0]] = []
+                    gene_groupings[n_p[0]].append(condition)
+
+                if n_p[1] < marker_cutoff:
+                    if n_p[0] not in marker_gene_groupings.keys():
+                        marker_gene_groupings[n_p[0]] = []
+                    marker_gene_groupings[n_p[0]].append(condition)
 
             genes = [n_p[0] for n_p in names_and_pvals if np[1] < cutoff]
             marker_genes = [n_p[0] for n_p in names_and_pvals if np[1] < marker_cutoff]
 
             group_rows.append({'condition':condition, 'genes':genes, 'marker_genes':marker_genes})
 
-    gene_rows = get_gene_rows(gene_groupings, marker_gene_groupings)
+        gene_rows = get_gene_rows(gene_groupings, marker_gene_groupings)
 
-    return group_rows, gene_rows
+        return group_rows, gene_rows
 
 def main(output_directory: Path):
 
