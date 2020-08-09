@@ -5,7 +5,7 @@ label: Annotates each h5ad file with dataset and tissue type, then concatenates
 hints:
   DockerRequirement:
     dockerPull: hubmap/cross-dataset-atac:latest
-baseCommand: /opt/parse_atac_output.py
+baseCommand: /opt/annotate_concatenate.py
 
 inputs:
   data_dir:
@@ -15,8 +15,8 @@ inputs:
       position: 1
 
 outputs:
-  csv_files:
-    type: File[]
+  concatenated_annotated_file:
+    type: File
+    doc: h5ad file containing annotated and concatenated atac-seq data
     outputBinding:
-      glob: "*.csv"
-    doc: csvs containing cell level, group level, and gene level data from across atac-seq datasets
+      glob: 'concatenated_annotated.h5ad'

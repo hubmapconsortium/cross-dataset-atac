@@ -11,7 +11,7 @@ inputs:
 
 outputs:
   csv_files:
-    outputSource: annotate-concatenate/csv_files
+    outputSource: marker-genes/csv_files
     type: File[]
 
 steps:
@@ -21,7 +21,17 @@ steps:
         source: data_dir
 
     out:
-      - csv_files
+      - concatenated_annotated_file
 
     run: steps/annotate-concatenate.cwl
-    label: "Annotates and concatenates csv and hdf5 files, writes out csv_files"
+    label: "Annotates and concatenates csv and hdf5 files, writes out to h5ad"
+
+  - id: marker-genes
+    in:
+      - id: concatenated_annotated_file
+        source: annotate-concatenate/concatenated_annotated_file
+    out:
+      - csv_files
+
+    run: steps/marker-genes.cwl
+    label: "Finds marker genes associated with different groupings in atac-seq data"
