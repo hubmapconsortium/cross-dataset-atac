@@ -12,13 +12,13 @@ inputs:
     type: File
     doc: Text file containing list of directories of processed datasets
     inputBinding:
-      position: 2
+      position: 1
 
   nexus_token:
     type: string
     doc: Valid nexus token
     inputBinding:
-      position: 1
+      position: 2
 
 outputs:
   data_directories:
