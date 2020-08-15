@@ -77,19 +77,16 @@ def get_cell_by_gene_df(cell_by_gene_file: Path)->pd.DataFrame:
   cell_by_gene_df = pd.DataFrame(cell_by_gene, columns=genes, index=cells)
   return cell_by_gene_df
 
-def get_cell_by_gene_files(directory: Path) -> Iterable[Path]:
-    pattern = '**/cell_by_gene.hdf5'
-    yield from directory.glob(pattern)
-
-def get_output_files(directory:Path) -> Iterable[Tuple[Path, Path, Path]]:
+def get_output_files(directories:List[Path]) -> Iterable[Tuple[Path, Path, Path]]:
     cell_by_gene_files = get_cell_by_gene_files(directory)
-    output_files = [(cell_by_gene_file, cell_by_gene_file.parent / Path('cellMotif.csv'), cell_by_gene_file.parent / Path('cellClusterAssignment.csv')) for cell_by_gene_file in cell_by_gene_files]
+    relative_paths = (Path('cell_by_gene.hdf5'), Path('cellMotif.csv'), Path('cellClusterAssignment.csv'))
+    output_files = [(directory / relative_paths[0], directory / relative_paths[1], directory / relative_paths[2]) for directory in directories]
     return output_files
 
 def merge_dfs(cell_by_gene_file:Path, cell_motif_file:Path, cell_cluster_file:Path, nexus_token:str)->pd.DataFrame:
 
     dataset = get_dataset(cell_by_gene_file)
-    tissue_type = get_tissue_type(cell_by_gene_file.parent, nexus_token)
+    tissue_type = get_tissue_type(dataset, nexus_token)
 
     cell_by_gene_df = get_cell_by_gene_df(cell_by_gene_file)
     cell_by_gene_df['cell_id'] = cell_by_gene_df.index
@@ -135,10 +132,10 @@ def main(output_directory: Path):
 
     adata.write('concatenated_annotated.h5ad')
 
-
 if __name__ == '__main__':
     p = ArgumentParser()
-    p.add_argument('output_directory', type=Path)
+    p.add_argument('nexus_token', type=str)
+    p.add_argument('data_directories', type=Path, nargs='+')
     args = p.parse_args()
 
-    main(args.output_directory)
+    main(args.nexus_token, args.data_directories)
