@@ -5,26 +5,49 @@ cwlVersion: v1.0
 label: Pipeline for parsing and aggregating atac output across datasets
 
 inputs:
-  data_dir:
+
+  data_dir_log:
     label: "Directory containing h5ad data files"
-    type: Directory
+    type: File
+
+  nexus_token:
+    label: "Valid nexus token for search-api"
+    type: String
 
 outputs:
+
   csv_files:
     outputSource: marker-genes/csv_files
     type: File[]
 
+  concatenated_file:
+    outputSource: annotate-concatenate/concatenated_file
+    type: File
+
 steps:
+
+  - id: read-data-dir-log:
+    in:
+      - id: data_dir_log
+        source: data_dir_log
+    out:
+      - data_directories
+
+    run: steps/read-data-dir-log.cwl
+    label: "Reads the log containing processed datasets"
+
   - id: annotate-concatenate
     in:
-      - id: data_dir
-        source: data_dir
+      - id: data_directories
+        source: read-data-dir-log/data_directories
+      - id: nexus_token
+        source: nexus_token
 
     out:
-      - concatenated_annotated_file
+      - concatenated_file
 
     run: steps/annotate-concatenate.cwl
-    label: "Annotates and concatenates csv and hdf5 files, writes out to h5ad"
+    label: "Annotates and concatenates h5ad data files in directory"
 
   - id: marker-genes
     in:
