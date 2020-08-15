@@ -15,7 +15,7 @@ def main(data_dir_log:Path, nexus_token:str):
 
     yaml_dict['nexus_token'] = nexus_token
 
-    with open('data_directories.yml') as file:
+    with open('data_directories.yml', 'w') as file:
         yaml.dump(yaml_dict, file)
 
 if __name__ == '__main__':

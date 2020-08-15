@@ -8,6 +8,8 @@ import numpy as np
 import anndata
 from os import fspath
 import scanpy as sc
+import yaml
+import requests
 
 def get_dataset(cell_by_gene_file: Path)->str:
     return cell_by_gene_file.parent.stem
@@ -19,7 +21,7 @@ def ensemble_to_symbol(ensemble_id:str)->str:
 
 def get_tissue_type(dataset:str, token:str)->str:
 
-    organ_dict = yaml.load(open('organ_types.yaml'), Loader=yaml.BaseLoader)
+    organ_dict = yaml.load(open('/opt/organ_types.yaml'), Loader=yaml.BaseLoader)
 
     dataset_query_dict = {
        "query": {
@@ -78,7 +80,6 @@ def get_cell_by_gene_df(cell_by_gene_file: Path)->pd.DataFrame:
   return cell_by_gene_df
 
 def get_output_files(directories:List[Path]) -> Iterable[Tuple[Path, Path, Path]]:
-    cell_by_gene_files = get_cell_by_gene_files(directory)
     relative_paths = (Path('cell_by_gene.hdf5'), Path('cellMotif.csv'), Path('cellClusterAssignment.csv'))
     output_files = [(directory / relative_paths[0], directory / relative_paths[1], directory / relative_paths[2]) for directory in directories]
     return output_files
@@ -122,9 +123,9 @@ def make_adata(modality_df: pd.DataFrame):
     return adata
 
 
-def main(output_directory: Path):
+def main(nexus_token:str, output_directories: List[Path]):
 
-    dataset_dfs = [merge_dfs(cell_by_gene_file, cell_motif_file, cell_cluster_file) for cell_by_gene_file, cell_motif_file, cell_cluster_file in get_output_files(output_directory)]
+    dataset_dfs = [merge_dfs(cell_by_gene_file, cell_motif_file, cell_cluster_file, nexus_token) for cell_by_gene_file, cell_motif_file, cell_cluster_file in get_output_files(output_directories)]
 
     modality_df = pd.concat(dataset_dfs)
 
