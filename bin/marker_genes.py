@@ -98,4 +98,4 @@ if __name__ == '__main__':
     p.add_argument('concatenated_annotated_file', type=Path)
     args = p.parse_args()
 
-    main(args.output_directory)
+    main(args.concatenated_annotated_file)

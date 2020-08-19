@@ -15,7 +15,7 @@ def get_dataset(cell_by_gene_file: Path)->str:
     return cell_by_gene_file.parent.stem
 
 def ensemble_to_symbol(ensemble_id:str)->str:
-    request_url = 'https://mygene.info/v3/gene/' + ensemble_id + '?fields=symbol&dotfield=True'
+    request_url = 'https://mygene.info/v3/gene/' + ensemble_id.decode('UTF-8') + '?fields=symbol&dotfield=True'
     r = requests.get(request_url)
     return r.json()['symbol']
 
@@ -74,7 +74,7 @@ def get_cell_by_gene_df(cell_by_gene_file: Path)->pd.DataFrame:
   f = h5py.File(cell_by_gene_file, 'r')
   cell_by_gene = np.array(f['cell_by_gene'])
   genes = np.array(f['col_names'])
-  genes = [ensemble_to_symbol(gene) for gene in genes]
+#  genes = [ensemble_to_symbol(gene) for gene in genes]
   cells = np.array(f['row_names'])
   cell_by_gene_df = pd.DataFrame(cell_by_gene, columns=genes, index=cells)
   return cell_by_gene_df
@@ -119,6 +119,9 @@ def make_adata(modality_df: pd.DataFrame):
     uns = {'omic':'ATAC'}
 
     adata = anndata.AnnData(X=x, var=var, obs=obs, uns=uns)
+
+    sc.pp.filter_cells(adata, min_genes=200)
+    sc.pp.filter_genes(adata, min_cells=3)
 
     return adata
 
