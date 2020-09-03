@@ -12,7 +12,7 @@ inputs:
 
   nexus_token:
     label: "Valid nexus token for search-api"
-    type: String
+    type: string
 
 outputs:
 
@@ -21,7 +21,7 @@ outputs:
     type: File[]
 
   concatenated_file:
-    outputSource: annotate-concatenate/concatenated_file
+    outputSource: annotate-concatenate/concatenated_annotated_file
     type: File
 
 steps:
@@ -34,7 +34,7 @@ steps:
         source: nexus_token
 
     out:
-      - concatenated_file
+      - concatenated_annotated_file
 
     run: steps/annotate-concatenate.cwl
     label: "Annotates and concatenates h5ad data files in directory"

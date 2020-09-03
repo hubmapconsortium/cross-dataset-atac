@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Iterable, Tuple, List, Dict
+from typing import Iterable, Tuple, List
 import h5py
 import pandas as pd
 import numpy as np
 import anndata
-from os import fspath
 import scanpy as sc
 import yaml
 import requests
@@ -14,8 +13,9 @@ import requests
 def get_dataset(cell_by_gene_file: Path)->str:
     return cell_by_gene_file.parent.stem
 
-def ensemble_to_symbol(ensemble_id:str)->str:
-    request_url = 'https://mygene.info/v3/gene/' + ensemble_id.decode('UTF-8') + '?fields=symbol&dotfield=True'
+def ensembl_to_symbol(ensembl_id:str)->str:
+    ensembl_id = ensembl_id.split('.')[0]
+    request_url = 'https://mygene.info/v3/gene/' + ensembl_id + '?fields=symbol&dotfield=True'
     r = requests.get(request_url)
     return r.json()['symbol']
 
@@ -74,7 +74,7 @@ def get_cell_by_gene_df(cell_by_gene_file: Path)->pd.DataFrame:
   f = h5py.File(cell_by_gene_file, 'r')
   cell_by_gene = np.array(f['cell_by_gene'])
   genes = np.array(f['col_names'])
-#  genes = [ensemble_to_symbol(gene) for gene in genes]
+  genes = [ensembl_to_symbol(gene.decode('UTF-8')) for gene in genes]
   cells = np.array(f['row_names'])
   cell_by_gene_df = pd.DataFrame(cell_by_gene, columns=genes, index=cells)
   return cell_by_gene_df
@@ -93,18 +93,21 @@ def merge_dfs(cell_by_gene_file:Path, cell_motif_file:Path, cell_cluster_file:Pa
     cell_by_gene_df['cell_id'] = cell_by_gene_df.index
 
     cluster_df = pd.read_csv(cell_cluster_file)
-    cluster_df['cluster'] = dataset + "-" + cluster_df['Cluster'].astype(str)
+    cluster_list = [dataset + '-' + str(cluster) for cluster in cluster_df['Cluster']]
+    cluster_df['cluster'] = pd.Series(cluster_list, dtype=str)
+    cluster_df['cluster'] = cluster_df['cluster'].astype(str)
+    print(cluster_df['cluster'].dtype)
     cluster_df['cell_id'] = cluster_df['BarcodeID']
     cluster_df = cluster_df[['cell_id', 'cluster']].copy()
-
-    cell_by_gene_df = cell_by_gene_df.head(1000).copy()
-    cluster_df = cluster_df.head(1000).copy()
+    print(cluster_df['cluster'].dtype)
 
     merge_df = cell_by_gene_df.merge(cluster_df, how='outer')
 
     merge_df['dataset'] = dataset
     merge_df['tissue_type'] = tissue_type
     merge_df['modality'] = 'atac'
+
+    print(merge_df['cluster'].dtype)
 
     return merge_df
 
