@@ -27,3 +27,9 @@ outputs:
     doc: h5ad file containing annotated and concatenated atac-seq data
     outputBinding:
       glob: 'concatenated_annotated.h5ad'
+
+  gene_dictionary:
+    type: File
+    doc: json file mapping from gene symbols to versioned ensembl_ids
+    outputBinding:
+      glob: 'symbol_to_ensembl.json'

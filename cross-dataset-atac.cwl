@@ -24,6 +24,10 @@ outputs:
     outputSource: annotate-concatenate/concatenated_annotated_file
     type: File
 
+  gene_dictionary:
+    outputSource: annotate-concatenate/gene_dictionary
+    type: File
+
 steps:
 
   - id: annotate-concatenate
@@ -35,6 +39,7 @@ steps:
 
     out:
       - concatenated_annotated_file
+      - gene_dictionary
 
     run: steps/annotate-concatenate.cwl
     label: "Annotates and concatenates h5ad data files in directory"
