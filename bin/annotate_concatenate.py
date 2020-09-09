@@ -10,21 +10,44 @@ import scanpy as sc
 import yaml
 import requests
 import json
+from typing import Dict, List
 
 
 def get_dataset(cell_by_gene_file: Path) -> str:
     return cell_by_gene_file.parent.stem
 
+def get_gene_response(ensembl_ids: List[str]):
 
-def ensembl_to_symbol(ensembl_id: str) -> str:
-    ensembl_id = ensembl_id.split('.')[0]
-    request_url = 'https://mygene.info/v3/gene/' + ensembl_id.split('.')[0] + '?fields=symbol&dotfield=True'
-    r = requests.get(request_url)
-    if 'symbol' in r.json().keys():
-        return r.json()['symbol']
-    else:
-        print(ensembl_id)
-        return ensembl_id
+    request_url = 'https://mygene.info/v3/gene?fields=symbol'
+
+    chunk_size = 1000
+    chunks = (len(ensembl_ids) // chunk_size) + 1
+
+    base_list = []
+
+    for i in range(chunks):
+        if i < chunks - 1:
+            ensembl_slice = ensembl_ids[ i * chunk_size: (i + 1) * chunk_size]
+        else:
+            ensembl_slice = ensembl_ids[ i * chunk_size:]
+        request_body = {'ids': ', '.join(ensembl_slice)}
+        base_list.extend(requests.post(request_url, request_body).json())
+
+    return base_list
+
+def get_gene_dicts(ensembl_ids: List[str]) -> (Dict, Dict):
+    #    temp_forwards_dict = {ensembl_id:ensembl_id.split('.')[0] for ensembl_id in ensembl_ids}
+    temp_backwards_dict = {ensembl_id.split('.')[0]: ensembl_id for ensembl_id in ensembl_ids}
+    ensembl_ids = [ensembl_id.split('.')[0] for ensembl_id in ensembl_ids]
+
+    json_response = get_gene_response(ensembl_ids)
+
+    forwards_dict = {temp_backwards_dict[item['query']]: item['symbol'] for item in json_response if
+                     'symbol' in item.keys()}
+    backwards_dict = {item['symbol']: temp_backwards_dict[item['query']] for item in json_response if
+                      'symbol' in item.keys()}
+
+    return forwards_dict, backwards_dict
 
 
 def get_tissue_type(dataset: str, token: str) -> str:
@@ -122,14 +145,30 @@ def merge_dfs(cell_by_gene_file: Path, cell_motif_file: Path, cell_cluster_file:
     return merge_df
 
 
-def make_adata(modality_df: pd.DataFrame):
+def make_adata(modality_df: pd.DataFrame, ensembl_to_symbol_path: Path, symbol_to_ensembl_path: Path):
     obs_columns = ['cell_id', 'cluster', 'dataset', 'tissue_type', 'modality']
     obs = modality_df[obs_columns].copy()
     var_columns = modality_df.drop(obs_columns, axis=1).columns
-    symbol_ensembl_dict = {ensembl_to_symbol(ensembl_id): ensembl_id for ensembl_id in var_columns}
-    with open("symbol_to_ensemble.json", "w") as dictionary_file:
-        json.dump(symbol_ensembl_dict, dictionary_file)
-    var_columns = [ensembl_to_symbol(ensembl_id) for ensembl_id in var_columns]
+    var_columns = [column.decode('UTF-8') for column in var_columns]
+
+    symbol_to_ensembl_dict = {}
+    ensembl_to_symbol_dict = {}
+
+    if ensembl_to_symbol_path.exists():
+        with open(ensembl_to_symbol_path, 'r') as json_file:
+            ensembl_to_symbol_dict = json.load(json_file)
+        with open(symbol_to_ensembl_path, 'r') as json_file:
+            symbol_to_ensembl_dict = json.load(json_file)
+
+    else:
+        ensembl_to_symbol_dict, symbol_to_ensembl_dict = get_gene_dicts(var_columns)
+        with open('ensembl_to_symbol.json', 'w') as json_file:
+            json.dump(ensembl_to_symbol_dict, json_file)
+        with open('symbol_to_ensembl.json', 'w') as json_file:
+            json.dump(symbol_to_ensembl_dict, json_file)
+
+    keep_vars = [key for key in ensembl_to_symbol_dict.keys()]
+
     var = pd.DataFrame(index=var_columns)
     x = modality_df.drop(obs_columns, axis=1).to_numpy()
 
@@ -137,19 +176,24 @@ def make_adata(modality_df: pd.DataFrame):
 
     adata = anndata.AnnData(X=x, var=var, obs=obs, uns=uns)
 
+    adata = adata[:,keep_vars]
+    adata.var.index = [ensembl_to_symbol_dict[ensembl_id] for ensembl_id in adata.var.index]
+
     sc.pp.filter_cells(adata, min_genes=200)
     sc.pp.filter_genes(adata, min_cells=3)
 
     return adata
 
 
-def main(nexus_token: str, output_directories: List[Path]):
+def main(nexus_token: str, output_directories: List[Path],
+         ensembl_to_symbol_path: Path = Path('/opt/ensembl_to_symbol.json'),
+         symbol_to_ensembl_path: Path = Path('/opt/symbol_to_ensembl.json')):
     dataset_dfs = [merge_dfs(cell_by_gene_file, cell_motif_file, cell_cluster_file, nexus_token) for
                    cell_by_gene_file, cell_motif_file, cell_cluster_file in get_output_files(output_directories)]
 
     modality_df = pd.concat(dataset_dfs)
 
-    adata = make_adata(modality_df)
+    adata = make_adata(modality_df, ensembl_to_symbol_path, symbol_to_ensembl_path)
 
     adata.write('concatenated_annotated.h5ad')
 

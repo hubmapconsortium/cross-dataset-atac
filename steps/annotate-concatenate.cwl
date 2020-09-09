@@ -28,8 +28,8 @@ outputs:
     outputBinding:
       glob: 'concatenated_annotated.h5ad'
 
-  gene_dictionary:
-    type: File
-    doc: json file mapping from gene symbols to versioned ensembl_ids
+  gene_dictionaries:
+    type: File[]
+    doc: json files mapping from gene symbols to versioned ensembl_ids and back
     outputBinding:
-      glob: 'symbol_to_ensembl.json'
+      glob: '*.json'
