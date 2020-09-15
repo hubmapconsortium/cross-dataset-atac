@@ -48,7 +48,7 @@ def merge_dfs(cell_by_gene_file: Path, cell_motif_file: Path, cell_cluster_file:
     cluster_df = cluster_df[['cell_id', 'cluster']].copy()
     print(cluster_df['cluster'].dtype)
 
-    merge_df = cell_by_gene_df.merge(cluster_df, how='outer')
+    merge_df = cell_by_gene_df.merge(cluster_df, on='cell_id', how='outer')
 
     merge_df['dataset'] = dataset
     merge_df['tissue_type'] = tissue_type
