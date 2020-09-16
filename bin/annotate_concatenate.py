@@ -20,7 +20,7 @@ def get_cell_by_gene_df(cell_by_gene_file: Path) -> pd.DataFrame:
     cell_by_gene = np.array(f['cell_by_gene'])
     genes = np.array(f['col_names'])
     cells = np.array(f['row_names'])
-    cell_by_gene_df = pd.DataFrame(cell_by_gene, columns=genes, index=cells)
+    cell_by_gene_df = pd.DataFrame(cell_by_gene, columns=genes, index=cells, dtype=object)
     return cell_by_gene_df
 
 
@@ -41,8 +41,8 @@ def merge_dfs(cell_by_gene_file: Path, cell_motif_file: Path, cell_cluster_file:
 
     cluster_df = pd.read_csv(cell_cluster_file)
     cluster_list = [dataset + '-' + str(cluster) for cluster in cluster_df['Cluster']]
-    cluster_df['cluster'] = pd.Series(cluster_list, dtype=str)
-    cluster_df['cluster'] = cluster_df['cluster'].astype(str)
+    cluster_df['cluster'] = pd.Series(cluster_list, dtype=object)
+    cluster_df['cluster'] = cluster_df['cluster'].astype(object)
     print(cluster_df['cluster'].dtype)
     cluster_df['cell_id'] = cluster_df['BarcodeID']
     cluster_df = cluster_df[['cell_id', 'cluster']].copy()

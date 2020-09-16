@@ -14,8 +14,9 @@ def main(concatenated_annotated_file: Path):
     group_rows = get_rows(adata, groupings)
 
     cell_df = adata.obs.copy()
+    cell_df = cell_df.drop('n_genes', index=1)
 
-    group_df = pd.DataFrame(group_rows)
+    group_df = pd.DataFrame(group_rows, dtype=object)
 
     cell_df.to_csv('atac.csv')
     group_df.to_csv('atac_group.csv')
