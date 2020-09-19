@@ -39,10 +39,9 @@ def merge_dfs(cell_by_gene_file: Path, cell_motif_file: Path, cell_cluster_file:
     cell_by_gene_df = get_cell_by_gene_df(cell_by_gene_file)
     cell_by_gene_df['cell_id'] = cell_by_gene_df.index
 
-    cluster_df = pd.read_csv(cell_cluster_file)
-    cluster_list = [dataset + '-' + str(cluster) for cluster in cluster_df['Cluster']]
+    cluster_df = pd.read_csv(cell_cluster_file, dtype=object)
+    cluster_list = [str(str(dataset) + '-' + str(cluster)) for cluster in cluster_df['Cluster']]
     cluster_df['cluster'] = pd.Series(cluster_list, dtype=object)
-    cluster_df['cluster'] = cluster_df['cluster'].astype(object)
     print(cluster_df['cluster'].dtype)
     cluster_df['cell_id'] = cluster_df['BarcodeID']
     cluster_df = cluster_df[['cell_id', 'cluster']].copy()
@@ -56,7 +55,7 @@ def merge_dfs(cell_by_gene_file: Path, cell_motif_file: Path, cell_cluster_file:
 
     print(merge_df['cluster'].dtype)
 
-    return merge_df
+    return merge_df.astype(object)
 
 
 def make_adata(modality_df: pd.DataFrame, ensembl_to_symbol_path: Path, symbol_to_ensembl_path: Path):
