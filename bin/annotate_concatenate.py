@@ -16,13 +16,13 @@ def get_dataset(cell_by_gene_file: Path) -> str:
     return cell_by_gene_file.parent.stem
 
 def get_cell_by_gene_df(cell_by_gene_file: Path) -> pd.DataFrame:
-    f = h5py.File(cell_by_gene_file, 'r')
-    cell_by_gene = np.array(f['cell_by_gene'])
-    genes = np.array(f['col_names'])
-    cells = np.array(f['row_names'])
-    cell_by_gene_df = pd.DataFrame(cell_by_gene, columns=genes, index=cells, dtype=object)
-    return cell_by_gene_df
+    with h5py.File(cell_by_gene_file, 'r') as f:
+        cell_by_gene = np.array(f['cell_by_gene'])
+        genes = [col.decode('utf-8') for col in np.array(f['col_names'])]
+        cells = [row.decode('utf-8') for row in np.array(f['row_names'])]
 
+    cell_by_gene_df = pd.DataFrame(cell_by_gene, columns=genes, index=cells)
+    return cell_by_gene_df
 
 def get_output_files(directories: List[Path]) -> Iterable[Tuple[Path, Path, Path]]:
     relative_paths = (Path('cell_by_gene.hdf5'), Path('cellMotif.csv'), Path('cellClusterAssignment.csv'))
