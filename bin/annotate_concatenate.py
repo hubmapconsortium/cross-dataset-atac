@@ -2,118 +2,94 @@
 import json
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Iterable, List, Tuple
+from typing import Dict, List, Tuple
 
 import anndata
 import h5py
 import numpy as np
 import pandas as pd
-import scanpy as sc
-from cross_dataset_common import get_gene_dicts, get_tissue_type
+from cross_dataset_common import get_tissue_type
 
-def get_dataset(cell_by_gene_file: Path) -> str:
-    return cell_by_gene_file.parent.stem
+CELL_GY_GENE_FILENAME = 'cell_by_gene.hdf5'
+CELL_CLUSTER_FILENAME = 'umap_coords_clusters.csv'
 
-def get_cell_by_gene_df(cell_by_gene_file: Path) -> pd.DataFrame:
+GENE_MAPPING_DIRECTORIES = [
+    Path(__file__).parent.parent / 'data',
+    Path('/opt/data'),
+]
+
+def read_gene_mapping() -> Dict[str, str]:
+    """
+    Try to find the Ensembl to HUGO symbol mapping, with paths suitable
+    for running this script inside and outside a Docker container.
+    :return:
+    """
+    for directory in GENE_MAPPING_DIRECTORIES:
+        mapping_file = directory / 'ensembl_to_symbol.json'
+        if mapping_file.is_file():
+            with open(mapping_file) as f:
+                return json.load(f)
+    message_pieces = ["Couldn't find Ensembl → HUGO mapping file. Tried:"]
+    message_pieces.extend(f'\t{path}' for path in GENE_MAPPING_DIRECTORIES)
+    raise ValueError('\n'.join(message_pieces))
+
+def get_cell_by_gene_data(cell_by_gene_file: Path) -> Tuple[np.ndarray, List[str], List[str]]:
     with h5py.File(cell_by_gene_file, 'r') as f:
         cell_by_gene = np.array(f['cell_by_gene'])
-        genes = [col.decode('utf-8') for col in np.array(f['col_names'])]
         cells = [row.decode('utf-8') for row in np.array(f['row_names'])]
+        genes = [col.decode('utf-8') for col in np.array(f['col_names'])]
 
-    cell_by_gene_df = pd.DataFrame(cell_by_gene, columns=genes, index=cells)
-    return cell_by_gene_df
+    return cell_by_gene, cells, genes
 
-def get_output_files(directories: List[Path]) -> Iterable[Tuple[Path, Path, Path]]:
-    relative_paths = (Path('cell_by_gene.hdf5'), Path('cellMotif.csv'), Path('cellClusterAssignment.csv'))
-    output_files = [(directory / relative_paths[0], directory / relative_paths[1], directory / relative_paths[2]) for
-                    directory in directories]
-    return output_files
-
-
-def merge_dfs(cell_by_gene_file: Path, cell_motif_file: Path, cell_cluster_file: Path,
-              nexus_token: str) -> pd.DataFrame:
-    dataset = get_dataset(cell_by_gene_file)
+def read_cell_by_gene(directory: Path, nexus_token: str) -> anndata.AnnData:
+    dataset = directory.stem
     tissue_type = get_tissue_type(dataset, nexus_token)
 
-    cell_by_gene_df = get_cell_by_gene_df(cell_by_gene_file)
-    cell_by_gene_df['cell_id'] = cell_by_gene_df.index
+    cell_by_gene, cells, genes = get_cell_by_gene_data(directory / CELL_GY_GENE_FILENAME)
 
-    cluster_df = pd.read_csv(cell_cluster_file, dtype=object)
-    cluster_list = [str(str(dataset) + '-' + str(cluster)) for cluster in cluster_df['Cluster']]
-    cluster_df['cluster'] = pd.Series(cluster_list, dtype=object)
-    print(cluster_df['cluster'].dtype)
-    cluster_df['cell_id'] = cluster_df['BarcodeID']
-    cluster_df = cluster_df[['cell_id', 'cluster']].copy()
-    print(cluster_df['cluster'].dtype)
+    cluster_df = pd.read_csv(directory / CELL_CLUSTER_FILENAME, index_col=0)
+    cluster_list = [f'{dataset}-{cluster}' for cluster in cluster_df['cluster']]
+    cluster_series = pd.Series(cluster_list, index=cluster_df.index)
 
-    merge_df = cell_by_gene_df.merge(cluster_df, on='cell_id', how='outer')
+    data_for_obs_df = {
+        'cluster': cluster_series.loc[cells],
+        'dataset': dataset,
+        'tissue_type': tissue_type,
+        'modality': 'atac',
+    }
+    obs_df = pd.DataFrame(data_for_obs_df, index=cells)
 
-    merge_df['dataset'] = dataset
-    merge_df['tissue_type'] = tissue_type
-    merge_df['modality'] = 'atac'
-
-    print(merge_df['cluster'].dtype)
-
-    return merge_df.astype(object)
-
-
-def make_adata(modality_df: pd.DataFrame, ensembl_to_symbol_path: Path, symbol_to_ensembl_path: Path):
-    obs_columns = ['cell_id', 'cluster', 'dataset', 'tissue_type', 'modality']
-    obs = modality_df[obs_columns].copy()
-    var_columns = modality_df.drop(obs_columns, axis=1).columns
-    var_columns = [column.decode('UTF-8') for column in var_columns]
-
-    symbol_to_ensembl_dict = {}
-    ensembl_to_symbol_dict = {}
-
-    if ensembl_to_symbol_path.exists():
-        with open(ensembl_to_symbol_path, 'r') as json_file:
-            ensembl_to_symbol_dict = json.load(json_file)
-        with open(symbol_to_ensembl_path, 'r') as json_file:
-            symbol_to_ensembl_dict = json.load(json_file)
-
-    else:
-        ensembl_to_symbol_dict, symbol_to_ensembl_dict = get_gene_dicts(var_columns)
-        with open('ensembl_to_symbol.json', 'w') as json_file:
-            json.dump(ensembl_to_symbol_dict, json_file)
-        with open('symbol_to_ensembl.json', 'w') as json_file:
-            json.dump(symbol_to_ensembl_dict, json_file)
-
-    keep_vars = [key for key in ensembl_to_symbol_dict.keys()]
-
-    var = pd.DataFrame(index=var_columns)
-    x = modality_df.drop(obs_columns, axis=1).to_numpy()
-
-    uns = {'omic': 'ATAC'}
-
-    adata = anndata.AnnData(X=x, var=var, obs=obs, uns=uns)
-
-    adata = adata[:,keep_vars]
-    adata.var.index = [ensembl_to_symbol_dict[ensembl_id] for ensembl_id in adata.var.index]
-
-    sc.pp.filter_cells(adata, min_genes=200)
-    sc.pp.filter_genes(adata, min_cells=3)
-
+    adata = anndata.AnnData(
+        X=cell_by_gene,
+        obs=obs_df,
+        var=pd.DataFrame(index=genes),
+    )
     return adata
 
+def main(nexus_token: str, output_directories: List[Path]):
+    adatas = [read_cell_by_gene(directory, nexus_token) for directory in output_directories]
+    first, *rest = adatas
+    concatenated = first.concatenate(rest)
+    concatenated.uns['omic'] = 'ATAC'
 
-def main(nexus_token: str, output_directories: List[Path],
-         ensembl_to_symbol_path: Path = Path('/opt/ensembl_to_symbol.json'),
-         symbol_to_ensembl_path: Path = Path('/opt/symbol_to_ensembl.json')):
-    dataset_dfs = [merge_dfs(cell_by_gene_file, cell_motif_file, cell_cluster_file, nexus_token) for
-                   cell_by_gene_file, cell_motif_file, cell_cluster_file in get_output_files(output_directories)]
+    gene_mapping = read_gene_mapping()
+    keep_vars = [gene in gene_mapping for gene in concatenated.var.index]
+    concatenated = concatenated[:, keep_vars]
+    concatenated.var.index = [gene_mapping[var] for var in concatenated.var.index]
+    # This introduces duplicate gene names, use Pandas for aggregation
+    # since anndata doesn't have that functionality
+    temp_df = pd.DataFrame(concatenated.X, index=concatenated.obs.index, columns=concatenated.var.index)
+    aggregated = temp_df.groupby(level=0, axis=1).sum()
 
-    modality_df = pd.concat(dataset_dfs)
-
-    adata = make_adata(modality_df, ensembl_to_symbol_path, symbol_to_ensembl_path)
+    adata = anndata.AnnData(aggregated, obs=concatenated.obs)
+    adata.uns['omic'] = 'ATAC'
 
     adata.write('concatenated_annotated.h5ad')
 
-
 if __name__ == '__main__':
     p = ArgumentParser()
-    p.add_argument('nexus_token', type=str)
-    p.add_argument('data_directories', type=Path, nargs='+')
+    p.add_argument('nexus_token')
+    p.add_argument('data_directory', type=Path, nargs='+')
     args = p.parse_args()
 
-    main(args.nexus_token, args.data_directories)
+    main(args.nexus_token, args.data_directory)
