@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
+import json
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Iterable, Tuple
-import h5py
-import pandas as pd
-import numpy as np
-import anndata
-import scanpy as sc
-import json
-from typing import List
+from typing import Iterable, List, Tuple
 
-from cross_dataset_common import get_tissue_type, get_gene_dicts
+import anndata
+import h5py
+import numpy as np
+import pandas as pd
+import scanpy as sc
+from cross_dataset_common import get_gene_dicts, get_tissue_type
 
 def get_dataset(cell_by_gene_file: Path) -> str:
     return cell_by_gene_file.parent.stem
