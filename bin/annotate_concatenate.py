@@ -70,7 +70,6 @@ def main(nexus_token: str, output_directories: List[Path]):
     adatas = [read_cell_by_gene(directory, nexus_token) for directory in output_directories]
     first, *rest = adatas
     concatenated = first.concatenate(rest)
-    concatenated.uns['omic'] = 'ATAC'
 
     gene_mapping = read_gene_mapping()
     keep_vars = [gene in gene_mapping for gene in concatenated.var.index]
