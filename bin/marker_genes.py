@@ -13,7 +13,6 @@ def main(concatenated_annotated_file: Path):
     group_rows = get_rows(adata, groupings)
 
     cell_df = adata.obs.copy()
-    cell_df = cell_df.drop(['n_genes'], axis=1)
     cell_df = add_quant_columns(cell_df, adata)
 
     group_df = pd.DataFrame(group_rows, dtype=object)
