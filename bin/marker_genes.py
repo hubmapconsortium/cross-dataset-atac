@@ -10,6 +10,8 @@ def main(concatenated_annotated_file: Path):
 
     groupings = ['cluster', 'dataset', 'tissue_type']
 
+    adata.obs['cell_id'] = adata.obs.index
+
     group_rows = get_rows(adata, groupings)
 
     cell_df = adata.obs.copy()
