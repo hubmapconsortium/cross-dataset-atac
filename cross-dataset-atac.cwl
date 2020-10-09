@@ -16,9 +16,9 @@ inputs:
 
 outputs:
 
-  csv_files:
-    outputSource: marker-genes/csv_files
-    type: File[]
+  hdf5_file:
+    outputSource: marker-genes/hdf5_file
+    type: File
 
   concatenated_file:
     outputSource: annotate-concatenate/concatenated_annotated_file
@@ -49,7 +49,7 @@ steps:
       - id: concatenated_annotated_file
         source: annotate-concatenate/concatenated_annotated_file
     out:
-      - csv_files
+      - hdf5_file
 
     run: steps/marker-genes.cwl
     label: "Finds marker genes associated with different groupings in atac-seq data"

@@ -15,8 +15,8 @@ inputs:
       position: 1
 
 outputs:
-  csv_files:
-    type: File[]
+  hdf5_file:
+    type: File
     outputBinding:
-      glob: "*.csv"
-    doc: csvs containing cell level, group level, and gene level data from across atac-seq datasets
+      glob: "atac.hdf5"
+    doc: hdf5 file with layers containing dataframes for cell, group, and quant data
