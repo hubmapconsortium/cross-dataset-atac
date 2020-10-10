@@ -23,14 +23,10 @@ def main(concatenated_annotated_file: Path):
 
     group_df = pd.DataFrame(group_rows, dtype=object)
 
-    cell_df.to_csv('atac.csv')
-    group_df.to_csv('atac_group.csv')
-    quant_df.to_csv('atac_quant.csv')
-
     with pd.HDFStore('atac.hdf5') as store:
-        store['cell'] = cell_df
-        store['group'] = group_df
-        store['quant'] = quant_df
+        store.put('cell', cell_df, format='t')
+        store.put('group', group_df)
+        store.put('quant', quant_df)
 
 
 if __name__ == '__main__':
