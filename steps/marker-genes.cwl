@@ -20,3 +20,9 @@ outputs:
     outputBinding:
       glob: "atac.hdf5"
     doc: hdf5 file with layers containing dataframes for cell, group, and quant data
+
+  csv_file:
+    type: File
+    outputBinding:
+      glob: "long_atac_quant.csv"
+    doc: csv file containing long narrow expression data

@@ -20,6 +20,10 @@ outputs:
     outputSource: marker-genes/hdf5_file
     type: File
 
+  csv_file:
+    outputSource: marker-genes/csv_file
+    type: File
+
   concatenated_file:
     outputSource: annotate-concatenate/concatenated_annotated_file
     type: File
@@ -50,6 +54,7 @@ steps:
         source: annotate-concatenate/concatenated_annotated_file
     out:
       - hdf5_file
+      - csv_file
 
     run: steps/marker-genes.cwl
     label: "Finds marker genes associated with different groupings in atac-seq data"
