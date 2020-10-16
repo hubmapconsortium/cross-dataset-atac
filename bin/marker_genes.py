@@ -3,7 +3,7 @@ import anndata
 import pandas as pd
 from argparse import ArgumentParser
 from pathlib import Path
-from cross_dataset_common import get_rows, add_quant_columns
+from cross_dataset_common import get_pval_and_organ_dfs
 
 def get_quant_df(adata: anndata.AnnData)->pd.DataFrame:
     return pd.DataFrame(adata.X, columns=adata.var.index, index=adata.obs.index)
@@ -15,11 +15,7 @@ def make_long_df(quant_df: pd.DataFrame):
 def main(concatenated_annotated_file: Path):
     adata = anndata.read_h5ad(concatenated_annotated_file)
 
-    groupings = ['cluster', 'dataset', 'tissue_type']
-
     adata.obs['cell_id'] = adata.obs.index
-
-    group_rows = get_rows(adata, groupings)
 
     cell_df = adata.obs.copy()
 
@@ -28,11 +24,12 @@ def main(concatenated_annotated_file: Path):
     long_df = make_long_df(quant_df)
     long_df.to_csv('long_atac_quant.csv')
 
-    group_df = pd.DataFrame(group_rows, dtype=object)
+    pval_df, organ_df = get_pval_and_organ_dfs(adata)
 
     with pd.HDFStore('atac.hdf5') as store:
         store.put('cell', cell_df, format='t')
-        store.put('group', group_df)
+        store.put('organ', organ_df)
+        store.put('p_values', pval_df)
         store.put('quant', quant_df)
 
 
