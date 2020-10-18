@@ -30,7 +30,7 @@ def main(concatenated_annotated_file: Path):
         store.put('cell', cell_df, format='t')
         store.put('organ', organ_df)
         store.put('p_values', pval_df)
-        store.put('quant', quant_df)
+#        store.put('quant', quant_df)
 
 
 if __name__ == '__main__':

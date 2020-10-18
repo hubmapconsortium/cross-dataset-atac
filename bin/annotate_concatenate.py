@@ -55,7 +55,6 @@ def read_cell_by_gene(directory: Path, nexus_token: str) -> anndata.AnnData:
         'cluster': cluster_series.loc[cells],
         'dataset': dataset,
         'tissue_type': tissue_type,
-        'modality': 'atac',
     }
     obs_df = pd.DataFrame(data_for_obs_df, index=cells)
 
