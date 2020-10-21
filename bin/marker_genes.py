@@ -21,7 +21,8 @@ def main(concatenated_annotated_file: Path):
 
     quant_df = get_quant_df(adata)
 
-    long_df = make_long_df(quant_df)
+    long_df = pd.DataFrame()
+#    long_df = make_long_df(quant_df)
     long_df.to_csv('long_atac_quant.csv')
 
     pval_df, organ_df = get_pval_and_organ_dfs(adata)
@@ -30,7 +31,7 @@ def main(concatenated_annotated_file: Path):
         store.put('cell', cell_df, format='t')
         store.put('organ', organ_df)
         store.put('p_values', pval_df)
-#        store.put('quant', quant_df)
+        store.put('quant', quant_df)
 
 
 if __name__ == '__main__':
