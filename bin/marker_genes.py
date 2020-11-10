@@ -3,10 +3,7 @@ import anndata
 import pandas as pd
 from argparse import ArgumentParser
 from pathlib import Path
-from cross_dataset_common import get_pval_dfs, flatten_quant_df
-
-def get_quant_df(adata: anndata.AnnData)->pd.DataFrame:
-    return pd.DataFrame(adata.X, columns=adata.var.index, index=adata.obs.index)
+from cross_dataset_common import get_pval_dfs, make_quant_csv
 
 
 def main(concatenated_annotated_file: Path):
@@ -16,10 +13,7 @@ def main(concatenated_annotated_file: Path):
 
     cell_df = adata.obs.copy()
 
-    quant_df = get_quant_df(adata)
-
-    long_df = flatten_quant_df(quant_df)
-    long_df.to_csv('atac.csv')
+    make_quant_csv(adata, 'atac')
 
     pval_df = get_pval_dfs(adata)
 
