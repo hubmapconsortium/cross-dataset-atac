@@ -42,17 +42,18 @@ def get_cell_by_gene_data(cell_by_gene_file: Path) -> Tuple[np.ndarray, List[str
     return cell_by_gene, cells, genes
 
 def read_cell_by_gene(directory: Path, nexus_token: str) -> anndata.AnnData:
+    modality = 'atac'
     dataset = directory.stem
     tissue_type = get_tissue_type(dataset, nexus_token)
 
     cell_by_gene, cells, genes = get_cell_by_gene_data(directory / CELL_GY_GENE_FILENAME)
 
     cluster_df = pd.read_csv(directory / CELL_CLUSTER_FILENAME, index_col=0)
-    cluster_list = [f'{dataset}-{cluster}' for cluster in cluster_df['cluster']]
+    cluster_list = [f'{modality}-{dataset}-{cluster}' for cluster in cluster_df['cluster']]
     cluster_series = pd.Series(cluster_list, index=cluster_df.index)
 
     data_for_obs_df = {
-        'cluster': cluster_series.loc[cells],
+        'leiden': cluster_series.loc[cells],
         'dataset': dataset,
         'tissue_type': tissue_type,
     }

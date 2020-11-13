@@ -15,11 +15,12 @@ def main(concatenated_annotated_file: Path):
 
     make_quant_csv(adata, 'atac')
 
-    pval_df = get_pval_dfs(adata)
+    organ_df, cluster_df = get_pval_dfs(adata)
 
     with pd.HDFStore('atac.hdf5') as store:
         store.put('cell', cell_df, format='t')
-        store.put('p_values', pval_df)
+        store.put('organ', organ_df)
+        store.put('cluster', cluster_df)
 
 
 if __name__ == '__main__':
