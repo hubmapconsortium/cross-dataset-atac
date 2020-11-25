@@ -8,7 +8,7 @@ import anndata
 import h5py
 import numpy as np
 import pandas as pd
-from cross_dataset_common import get_tissue_type
+from cross_dataset_common import get_tissue_type, hash_cell_id
 
 CELL_GY_GENE_FILENAME = 'cell_by_gene.hdf5'
 CELL_CLUSTER_FILENAME = 'umap_coords_clusters.csv'
@@ -49,10 +49,16 @@ def read_cell_by_gene(directory: Path, nexus_token: str) -> anndata.AnnData:
     cell_by_gene, cells, genes = get_cell_by_gene_data(directory / CELL_GY_GENE_FILENAME)
 
     cluster_df = pd.read_csv(directory / CELL_CLUSTER_FILENAME, index_col=0)
-    cluster_list = [f'{modality}-{dataset}-{cluster}' for cluster in cluster_df['cluster']]
+    cluster_list = [f'{dataset}-{cluster}' for cluster in cluster_df['cluster']]
     cluster_series = pd.Series(cluster_list, index=cluster_df.index)
 
+    barcodes = [cell_id for cell_id in cells]
+    semantic_cell_ids = [dataset + '-' + barcode for barcode in barcodes]
+    cell_ids = hash_cell_id(pd.Series([semantic_cell_id.encode('utf-8') for semantic_cell_id in semantic_cell_ids]))
+
     data_for_obs_df = {
+        'cell_id': cell_ids,
+        'barcode': barcodes,
         'leiden': cluster_series.loc[cells],
         'dataset': dataset,
         'tissue_type': tissue_type,

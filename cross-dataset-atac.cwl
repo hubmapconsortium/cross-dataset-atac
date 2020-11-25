@@ -32,6 +32,10 @@ outputs:
     outputSource: annotate-concatenate/gene_dictionaries
     type: File[]
 
+  minimal_files:
+    outputSource: marker-genes/minimal_files
+    type: File[]
+
 steps:
 
   - id: annotate-concatenate

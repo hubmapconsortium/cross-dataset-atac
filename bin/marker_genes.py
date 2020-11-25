@@ -3,13 +3,11 @@ import anndata
 import pandas as pd
 from argparse import ArgumentParser
 from pathlib import Path
-from cross_dataset_common import get_pval_dfs, make_quant_csv
+from cross_dataset_common import get_pval_dfs, make_quant_csv, create_minimal_dataset
 
 
 def main(concatenated_annotated_file: Path):
     adata = anndata.read_h5ad(concatenated_annotated_file)
-
-    adata.obs['cell_id'] = adata.obs.index
 
     cell_df = adata.obs.copy()
 
@@ -21,6 +19,8 @@ def main(concatenated_annotated_file: Path):
         store.put('cell', cell_df, format='t')
         store.put('organ', organ_df)
         store.put('cluster', cluster_df)
+
+    create_minimal_dataset('atac.hdf5')
 
 
 if __name__ == '__main__':
