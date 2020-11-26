@@ -3,7 +3,7 @@ import anndata
 import pandas as pd
 from argparse import ArgumentParser
 from pathlib import Path
-from cross_dataset_common import get_pval_dfs, make_quant_csv, create_minimal_dataset
+from cross_dataset_common import get_pval_dfs, make_quant_df, create_minimal_dataset
 
 
 def main(concatenated_annotated_file: Path):
@@ -11,7 +11,8 @@ def main(concatenated_annotated_file: Path):
 
     cell_df = adata.obs.copy()
 
-    make_quant_csv(adata, 'atac')
+    quant_df = make_quant_df(adata)
+    quant_df.to_csv('atac.csv')
 
     organ_df, cluster_df = get_pval_dfs(adata)
 
@@ -20,7 +21,7 @@ def main(concatenated_annotated_file: Path):
         store.put('organ', organ_df)
         store.put('cluster', cluster_df)
 
-    create_minimal_dataset('atac.hdf5')
+    create_minimal_dataset(cell_df, quant_df, organ_df, cluster_df, 'atac')
 
 
 if __name__ == '__main__':
