@@ -27,7 +27,12 @@ outputs:
       glob: "long_atac_quant.csv"
     doc: csv file containing long narrow expression data
 
-  minimal_files:
-    type: File[]
+  mini_hdf5_file:
+    type: File
     outputBinding:
-      glob: "mini*"
+      glob: "mini_atac.hdf5"
+
+  mini_csv_file:
+    type: File
+    outputBinding:
+     glob: "mini_atac.csv"

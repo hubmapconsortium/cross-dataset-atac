@@ -32,9 +32,13 @@ outputs:
     outputSource: annotate-concatenate/gene_dictionaries
     type: File[]
 
-  minimal_files:
-    outputSource: marker-genes/minimal_files
-    type: File[]
+  mini_hdf5_file:
+    outputSource: marker-genes/mini_hdf5_file
+    type: File
+
+  mini_csv_file:
+    outputSource: marker-genes/mini_csv_file
+    type: File
 
 steps:
 
