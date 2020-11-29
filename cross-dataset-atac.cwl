@@ -63,6 +63,8 @@ steps:
     out:
       - hdf5_file
       - csv_file
+      - mini_hdf5_file
+      - mini_csv_file
 
     run: steps/marker-genes.cwl
     label: "Finds marker genes associated with different groupings in atac-seq data"
