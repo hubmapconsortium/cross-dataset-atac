@@ -8,7 +8,7 @@ import anndata
 import h5py
 import numpy as np
 import pandas as pd
-from cross_dataset_common import get_tissue_type, hash_cell_id
+from cross_dataset_common import get_tissue_type, hash_cell_id, get_cluster_df
 
 CELL_GY_GENE_FILENAME = 'cell_by_gene.hdf5'
 CELL_CLUSTER_FILENAME = 'umap_coords_clusters.csv'
@@ -74,6 +74,12 @@ def read_cell_by_gene(directory: Path, nexus_token: str) -> anndata.AnnData:
 
 def main(nexus_token: str, output_directories: List[Path]):
     adatas = [read_cell_by_gene(directory, nexus_token) for directory in output_directories]
+
+    cluster_dfs = [get_cluster_df(adata) for adata in adatas]
+    cluster_df = pd.concat(cluster_dfs)
+    with pd.HDFStore('cluster.hdf5') as store:
+        store.put('cluster', cluster_df)
+
     first, *rest = adatas
     concatenated = first.concatenate(rest)
 

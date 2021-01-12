@@ -14,6 +14,11 @@ inputs:
     inputBinding:
       position: 1
 
+  old_cluster_file:
+    type: File
+    inputBinding:
+      position: 2
+
 outputs:
   hdf5_file:
     type: File

@@ -33,3 +33,9 @@ outputs:
     doc: json files mapping from gene symbols to versioned ensembl_ids and back
     outputBinding:
       glob: '*.json'
+
+  old_cluster_file:
+    type: File
+    outputBinding:
+      glob: "cluster.hdf5"
+    doc: Hdf file containing old cluster p values

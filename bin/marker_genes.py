@@ -6,7 +6,7 @@ from pathlib import Path
 from cross_dataset_common import get_pval_dfs, make_quant_df, create_minimal_dataset
 
 
-def main(concatenated_annotated_file: Path):
+def main(concatenated_annotated_file: Path, old_cluster_file:Path):
     adata = anndata.read_h5ad(concatenated_annotated_file)
 
     cell_df = adata.obs.copy()
@@ -15,6 +15,9 @@ def main(concatenated_annotated_file: Path):
     quant_df.to_csv('atac.csv')
 
     organ_df, cluster_df = get_pval_dfs(adata, "atac")
+
+    with pd.HDFStore(old_cluster_file) as store:
+        cluster_df = store.get('cluster')
 
     with pd.HDFStore('atac.hdf5') as store:
         store.put('cell', cell_df, format='t')
@@ -27,6 +30,7 @@ def main(concatenated_annotated_file: Path):
 if __name__ == '__main__':
     p = ArgumentParser()
     p.add_argument('concatenated_annotated_file', type=Path)
+    p.add_argument('old_cluster_file', type=Path)
     args = p.parse_args()
 
     main(args.concatenated_annotated_file)

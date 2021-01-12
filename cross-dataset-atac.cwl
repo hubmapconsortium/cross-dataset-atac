@@ -52,6 +52,7 @@ steps:
     out:
       - concatenated_annotated_file
       - gene_dictionaries
+      - old_cluster_file
 
     run: steps/annotate-concatenate.cwl
     label: "Annotates and concatenates h5ad data files in directory"
@@ -60,6 +61,8 @@ steps:
     in:
       - id: concatenated_annotated_file
         source: annotate-concatenate/concatenated_annotated_file
+      - id: old_cluster_file
+        source: annotate-concatenate/old_cluster_file
     out:
       - hdf5_file
       - csv_file
