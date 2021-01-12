@@ -24,7 +24,7 @@ outputs:
   csv_file:
     type: File
     outputBinding:
-      glob: "long_atac_quant.csv"
+      glob: "atac.csv"
     doc: csv file containing long narrow expression data
 
   mini_hdf5_file:

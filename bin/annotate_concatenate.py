@@ -54,10 +54,10 @@ def read_cell_by_gene(directory: Path, nexus_token: str) -> anndata.AnnData:
 
     barcodes = [cell_id for cell_id in cells]
     semantic_cell_ids = [dataset + '-' + barcode for barcode in barcodes]
-    cell_ids = hash_cell_id(pd.Series(semantic_cell_ids))
+#    cell_ids = hash_cell_id(pd.Series(semantic_cell_ids))
 
     data_for_obs_df = {
-        'cell_id': cell_ids,
+        'cell_id': semantic_cell_ids,
         'barcode': barcodes,
         'leiden': cluster_series.loc[cells],
         'dataset': dataset,

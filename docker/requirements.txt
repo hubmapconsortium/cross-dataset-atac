@@ -3,7 +3,7 @@ h5py==2.10.0
 pandas~=1.1.2
 pyyaml==5.3
 requests==2.22.0
-scanpy~=1.6.0
+scanpy~=1.5.1
 scikit_learn==0.23.1
 scipy~=1.5.2
 statsmodels==0.11.1
