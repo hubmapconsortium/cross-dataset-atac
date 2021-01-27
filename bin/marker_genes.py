@@ -33,4 +33,4 @@ if __name__ == '__main__':
     p.add_argument('old_cluster_file', type=Path)
     args = p.parse_args()
 
-    main(args.concatenated_annotated_file)
+    main(args.concatenated_annotated_file, args.old_cluster_file)

@@ -8,7 +8,10 @@ import anndata
 import h5py
 import numpy as np
 import pandas as pd
+import scanpy as sc
 from cross_dataset_common import get_tissue_type, hash_cell_id, get_cluster_df
+
+from hubmap_cell_id_gen_py import get_sequencing_cell_id
 
 CELL_GY_GENE_FILENAME = 'cell_by_gene.hdf5'
 CELL_CLUSTER_FILENAME = 'umap_coords_clusters.csv'
@@ -53,7 +56,7 @@ def read_cell_by_gene(directory: Path, nexus_token: str) -> anndata.AnnData:
     cluster_series = pd.Series(cluster_list, index=cluster_df.index)
 
     barcodes = [cell_id for cell_id in cells]
-    semantic_cell_ids = [dataset + '-' + barcode for barcode in barcodes]
+    semantic_cell_ids = [get_sequencing_cell_id(dataset, barcode) for barcode in barcodes]
 #    cell_ids = hash_cell_id(pd.Series(semantic_cell_ids))
 
     data_for_obs_df = {
@@ -72,30 +75,35 @@ def read_cell_by_gene(directory: Path, nexus_token: str) -> anndata.AnnData:
     )
     return adata
 
-def main(nexus_token: str, output_directories: List[Path]):
-    adatas = [read_cell_by_gene(directory, nexus_token) for directory in output_directories]
+def map_gene_ids(adata):
+    gene_mapping = read_gene_mapping()
+    keep_vars = [gene in gene_mapping for gene in adata.var.index]
+    adata = adata[:, keep_vars]
+    temp_df = pd.DataFrame(adata.X, index=adata.obs.index, columns=adata.var.index)
+    aggregated = temp_df.groupby(level=0, axis=1).sum()
+    adata = anndata.AnnData(aggregated, obs=adata.obs)
+    adata.var.index = [gene_mapping[var] for var in adata.var.index]
+    # This introduces duplicate gene names, use Pandas for aggregation
+    # since anndata doesn't have that functionality
+    return adata
 
-    cluster_dfs = [get_cluster_df(adata) for adata in adatas]
+def main(nexus_token: str, output_directories: List[Path]):
+
+    adatas = [read_cell_by_gene(directory, nexus_token) for directory in output_directories]
+    gene_mapped_adatas = [map_gene_ids(adata) for adata in adatas]
+    for adata in gene_mapped_adatas:
+        sc.tl.rank_genes_groups(adata, 'leiden', method='t-test', rankby_abs=True, n_genes=len(adata.var.index))
+
+    cluster_dfs = [get_cluster_df(adata) for adata in gene_mapped_adatas]
     cluster_df = pd.concat(cluster_dfs)
     with pd.HDFStore('cluster.hdf5') as store:
         store.put('cluster', cluster_df)
 
     first, *rest = adatas
     concatenated = first.concatenate(rest)
+    concatenated = map_gene_ids(concatenated)
 
-    gene_mapping = read_gene_mapping()
-    keep_vars = [gene in gene_mapping for gene in concatenated.var.index]
-    concatenated = concatenated[:, keep_vars]
-    concatenated.var.index = [gene_mapping[var] for var in concatenated.var.index]
-    # This introduces duplicate gene names, use Pandas for aggregation
-    # since anndata doesn't have that functionality
-    temp_df = pd.DataFrame(concatenated.X, index=concatenated.obs.index, columns=concatenated.var.index)
-    aggregated = temp_df.groupby(level=0, axis=1).sum()
-
-    adata = anndata.AnnData(aggregated, obs=concatenated.obs)
-    adata.uns['omic'] = 'ATAC'
-
-    adata.write('concatenated_annotated.h5ad')
+    concatenated.write('concatenated_annotated.h5ad')
 
 if __name__ == '__main__':
     p = ArgumentParser()
