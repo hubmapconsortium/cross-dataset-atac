@@ -45,19 +45,17 @@ def get_cell_by_gene_data(cell_by_gene_file: Path) -> Tuple[np.ndarray, List[str
     return cell_by_gene, cells, genes
 
 def read_cell_by_gene(directory: Path, nexus_token: str) -> anndata.AnnData:
-    modality = 'atac'
     dataset = directory.stem
     tissue_type = get_tissue_type(dataset, nexus_token)
 
     cell_by_gene, cells, genes = get_cell_by_gene_data(directory / CELL_GY_GENE_FILENAME)
 
     cluster_df = pd.read_csv(directory / CELL_CLUSTER_FILENAME, index_col=0)
-    cluster_list = [f'{dataset}-{cluster}' for cluster in cluster_df['cluster']]
+    cluster_list = [f'leiden-UMAP-{dataset}-{cluster}' for cluster in cluster_df['cluster']]
     cluster_series = pd.Series(cluster_list, index=cluster_df.index)
 
     barcodes = [cell_id for cell_id in cells]
     semantic_cell_ids = [get_sequencing_cell_id(dataset, barcode) for barcode in barcodes]
-#    cell_ids = hash_cell_id(pd.Series(semantic_cell_ids))
 
     data_for_obs_df = {
         'cell_id': semantic_cell_ids,
@@ -87,7 +85,10 @@ def map_gene_ids(adata):
     # since anndata doesn't have that functionality
     return adata
 
-def main(nexus_token: str, output_directories: List[Path]):
+def main(nexus_token:str, output_directories: List[Path]=[]):
+
+    if nexus_token == "None":
+        nexus_token = None
 
     adatas = [read_cell_by_gene(directory, nexus_token) for directory in output_directories]
     gene_mapped_adatas = [map_gene_ids(adata) for adata in adatas]
@@ -107,8 +108,8 @@ def main(nexus_token: str, output_directories: List[Path]):
 
 if __name__ == '__main__':
     p = ArgumentParser()
-    p.add_argument('nexus_token')
-    p.add_argument('data_directory', type=Path, nargs='+')
+    p.add_argument('nexus_token', type=str)
+    p.add_argument('data_directories', type=Path, nargs='+')
     args = p.parse_args()
 
-    main(args.nexus_token, args.data_directory)
+    main(args.nexus_token, args.data_directories)
