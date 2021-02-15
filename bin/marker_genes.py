@@ -10,6 +10,8 @@ def main(concatenated_annotated_file: Path, old_cluster_file:Path):
     adata = anndata.read_h5ad(concatenated_annotated_file)
 
     cell_df = adata.obs.copy()
+#    cell_df["clusters"] = pd.Series([[cluster] for cluster in cell_df["cluster"]])
+    cell_df = cell_df[['cell_id', 'barcode', 'dataset', 'organ', 'modality', 'clusters']]
 
     quant_df = make_quant_df(adata)
     quant_df.to_csv('atac.csv')

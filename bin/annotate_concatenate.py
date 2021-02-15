@@ -62,7 +62,7 @@ def read_cell_by_gene(directory: Path, nexus_token: str) -> anndata.AnnData:
         'barcode': barcodes,
         'leiden': cluster_series.loc[cells],
         'dataset': dataset,
-        'tissue_type': tissue_type,
+        'organ': tissue_type,
     }
     obs_df = pd.DataFrame(data_for_obs_df, index=cells)
 
