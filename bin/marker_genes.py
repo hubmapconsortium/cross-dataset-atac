@@ -3,10 +3,10 @@ import anndata
 import pandas as pd
 from argparse import ArgumentParser
 from pathlib import Path
-from cross_dataset_common import get_pval_dfs, make_quant_df, create_minimal_dataset
+from cross_dataset_common import get_pval_dfs, make_quant_df, create_minimal_dataset, tar_zip_scp
 
 
-def main(concatenated_annotated_file: Path, old_cluster_file:Path):
+def main(concatenated_annotated_file: Path, old_cluster_file:Path, known_hosts_file: Path):
     adata = anndata.read_h5ad(concatenated_annotated_file)
 
     cell_df = adata.obs.copy()
@@ -28,11 +28,14 @@ def main(concatenated_annotated_file: Path, old_cluster_file:Path):
 
     create_minimal_dataset(cell_df, quant_df, organ_df, cluster_df, 'atac')
 
+    tar_zip_scp("atac", known_hosts_file)
+
 
 if __name__ == '__main__':
     p = ArgumentParser()
     p.add_argument('concatenated_annotated_file', type=Path)
     p.add_argument('old_cluster_file', type=Path)
+    p.add_argument('known_hosts_file', type=Path)
     args = p.parse_args()
 
     main(args.concatenated_annotated_file, args.old_cluster_file)
