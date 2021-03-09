@@ -38,4 +38,4 @@ if __name__ == '__main__':
     p.add_argument('known_hosts_file', type=Path)
     args = p.parse_args()
 
-    main(args.concatenated_annotated_file, args.old_cluster_file)
+    main(args.concatenated_annotated_file, args.old_cluster_file, args.known_hosts_file)
