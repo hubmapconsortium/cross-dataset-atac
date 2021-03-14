@@ -14,10 +14,6 @@ inputs:
     label: "Valid nexus token for search-api"
     type: string?
 
-  known_hosts_file:
-    label: "Path to known hosts file"
-    type: File
-
 outputs:
 
   hdf5_file:
@@ -67,8 +63,6 @@ steps:
         source: annotate-concatenate/concatenated_annotated_file
       - id: old_cluster_file
         source: annotate-concatenate/old_cluster_file
-      - id: known_hosts_file
-        source: known_hosts_file
     out:
       - hdf5_file
       - csv_file
