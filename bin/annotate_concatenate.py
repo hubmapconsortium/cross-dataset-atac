@@ -14,6 +14,7 @@ from cross_dataset_common import get_tissue_type, hash_cell_id, get_cluster_df
 from hubmap_cell_id_gen_py import get_sequencing_cell_id
 
 CELL_GY_GENE_FILENAME = 'cell_by_gene.hdf5'
+CELL_BY_GENE_H5AD_FILENAME = 'cell_by_gene.h5ad'
 CELL_CLUSTER_FILENAME = 'umap_coords_clusters.csv'
 
 GENE_MAPPING_DIRECTORIES = [
@@ -44,7 +45,7 @@ def get_cell_by_gene_data(cell_by_gene_file: Path) -> Tuple[np.ndarray, List[str
 
     return cell_by_gene, cells, genes
 
-def read_cell_by_gene(directory: Path, nexus_token: str) -> anndata.AnnData:
+def read_cell_by_gene_hdf5(directory: Path, nexus_token: str) -> anndata.AnnData:
     dataset = directory.stem
     tissue_type = get_tissue_type(dataset, nexus_token)
 
@@ -72,6 +73,34 @@ def read_cell_by_gene(directory: Path, nexus_token: str) -> anndata.AnnData:
         var=pd.DataFrame(index=genes),
     )
     return adata
+
+def read_cell_by_gene_h5ad(directory, nexus_token):
+    dataset = directory.stem
+    tissue_type = get_tissue_type(dataset, nexus_token)
+
+    adata = anndata.read(directory + CELL_BY_GENE_H5AD_FILENAME)
+
+    cluster_list = [f'leiden-UMAP-{dataset}-{cluster}' for cluster in adata.obs['cluster']]
+    cluster_series = pd.Series(cluster_list, index=adata.obs.index)
+    adata.obs['clusters'] = cluster_series
+
+    barcodes = [cell_id for cell_id in adata.obs.index]
+    semantic_cell_ids = [get_sequencing_cell_id(dataset, barcode) for barcode in barcodes]
+
+    adata.obs['cell_id'] = pd.Series(semantic_cell_ids, index=adata.obs.index)
+    adata.obs['barcode'] = pd.Series(barcodes, index=adata.obs.index)
+    adata.obs['dataset'] = dataset
+    adata.obs['organ'] = tissue_type
+
+    adata.X = adata.layers['smoothed']
+
+    return adata
+
+def read_cell_by_gene(directory, nexus_token):
+    try:
+        return read_cell_by_gene_h5ad(directory, nexus_token)
+    except:
+        return read_cell_by_gene_hdf5(directory, nexus_token)
 
 def map_gene_ids(adata):
     gene_mapping = read_gene_mapping()
