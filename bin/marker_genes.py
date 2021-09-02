@@ -19,6 +19,8 @@ def main(concatenated_annotated_file: Path, old_cluster_file:Path):
 
     organ_df, cluster_df = get_pval_dfs(adata, "atac")
 
+    percentage_df = adata.uns['percentages']
+
     with pd.HDFStore(old_cluster_file) as store:
         cluster_df = store.get('cluster')
 
@@ -26,6 +28,7 @@ def main(concatenated_annotated_file: Path, old_cluster_file:Path):
         store.put('cell', cell_df, format='t')
         store.put('organ', organ_df)
         store.put('cluster', cluster_df)
+        store.put('percentages', percentage_df)
 
     create_minimal_dataset(cell_df, quant_df, organ_df, cluster_df, 'atac')
 

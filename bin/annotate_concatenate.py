@@ -9,9 +9,10 @@ import h5py
 import numpy as np
 import pandas as pd
 import scanpy as sc
-from cross_dataset_common import get_tissue_type, hash_cell_id, get_cluster_df
+from cross_dataset_common import get_tissue_type, hash_cell_id, get_cluster_df, precompute_percentages
 
 from hubmap_cell_id_gen_py import get_sequencing_cell_id
+from concurrent.futures import ThreadPoolExecutor
 
 CELL_GY_GENE_FILENAME = 'cell_by_gene.hdf5'
 CELL_BY_GENE_H5AD_FILENAME = 'cell_by_gene.h5ad'
@@ -126,6 +127,11 @@ def main(nexus_token:str, output_directories: List[Path]=[]):
     for adata in gene_mapped_adatas:
         sc.tl.rank_genes_groups(adata, 'leiden', method='t-test', rankby_abs=True, n_genes=len(adata.var.index))
 
+    with ThreadPoolExecutor(max_workers=len(output_directories)) as e:
+        percentage_dfs = e.map(precompute_percentages, gene_mapped_adatas)
+
+    percentage_df = pd.concat(percentage_dfs)
+
     cluster_dfs = [get_cluster_df(adata) for adata in gene_mapped_adatas]
     cluster_df = pd.concat(cluster_dfs)
     with pd.HDFStore('cluster.hdf5') as store:
@@ -134,6 +140,8 @@ def main(nexus_token:str, output_directories: List[Path]=[]):
     first, *rest = adatas
     concatenated = first.concatenate(rest)
     concatenated = map_gene_ids(concatenated)
+
+    concatenated.uns['percentages'] = percentage_df
 
     concatenated.write('concatenated_annotated.h5ad')
 
