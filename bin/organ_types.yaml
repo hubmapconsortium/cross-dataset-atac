@@ -1,11 +1,24 @@
+
+AO:
+  description: Aorta
 BL:
   description: Bladder
+BD:
+  description: Blood
+BM:
+  description: Bone Marrow
 BR:
   description: Brain
+LF:
+  description: Fallopian Tube (Left)
+RF:
+  description: Fallopian Tube (Right)
 HT:
   description: Heart
 LB:
   description: Bronchus (Left)
+LE:
+  description: Eye (Left)
 LI:
   description: Large Intestine
 LK:
@@ -14,6 +27,8 @@ LL:
   description: Lung (Left)
 LV:
   description: Liver
+LY:
+  description: Lymph Node
 LY01:
   description: Lymph Node 01
 LY02:
@@ -54,21 +69,37 @@ LY19:
   description: Lymph Node 19
 LY20:
   description: Lymph Node 20
+LO:
+  description: Ovary (Left)
+RO:
+  description: Ovary (Right)
 OT:
   description: Other
+PA:
+  description: Pancreas
+PL:
+  description: Placenta
 RB:
   description: Bronchus (Right)
+RE:
+  description: Eye (Right)
 RK:
   description: Kidney (Right)
 RL:
   description: Lung (Right)
 SI:
   description: Small Intestine
+SK:
+  description: Skin
 SP:
   description: Spleen
+ST:
+  description: Sternum
 TH:
   description: Thymus
 TR:
   description: Trachea
 UR:
   description: Ureter
+UT:
+  description: Uterus

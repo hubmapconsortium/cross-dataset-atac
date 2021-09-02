@@ -64,6 +64,7 @@ def read_cell_by_gene_hdf5(directory: Path, nexus_token: str) -> anndata.AnnData
         'leiden': cluster_series.loc[cells],
         'dataset': dataset,
         'organ': tissue_type,
+        'modality':'atac',
     }
     obs_df = pd.DataFrame(data_for_obs_df, index=cells)
 
@@ -82,7 +83,7 @@ def read_cell_by_gene_h5ad(directory, nexus_token):
 
     cluster_list = [f'leiden-UMAP-{dataset}-{cluster}' for cluster in adata.obs['cluster']]
     cluster_series = pd.Series(cluster_list, index=adata.obs.index)
-    adata.obs['clusters'] = cluster_series
+    adata.obs['leiden'] = cluster_series
 
     barcodes = [cell_id for cell_id in adata.obs.index]
     semantic_cell_ids = [get_sequencing_cell_id(dataset, barcode) for barcode in barcodes]
@@ -91,6 +92,7 @@ def read_cell_by_gene_h5ad(directory, nexus_token):
     adata.obs['barcode'] = pd.Series(barcodes, index=adata.obs.index)
     adata.obs['dataset'] = dataset
     adata.obs['organ'] = tissue_type
+    adata.obs['modality'] = 'atac'
 
     adata.X = adata.layers['smoothed']
 
