@@ -31,6 +31,22 @@ def annotate_genes(adata):
 
     return pd.DataFrame(dict_list)
 
+def make_minimal_adata(csv_file: Path):
+    quant_df = pd.read_csv(csv_file)
+    var_ids = list(quant_df['q_var_id'].unique())
+    var = pd.DataFrame(index=var_ids)
+    obs_ids = list(quant_df['q_cell_id'].unique())
+    obs = pd.DataFrame(index=obs_ids)
+    X = np.zeros((len(obs_ids, len(var_ids))))
+    adata = anndata.AnnData(X=X, var=var, obs=obs)
+    for i in quant_df.index:
+        obs_id = quant_df["q_cell_id"][i]
+        var_id = quant_df["q_gene_id"][i]
+        value = quant_df["value"][i]
+        adata[obs_id, var_id] = value
+
+    return adata
+
 def make_pval_adata(hdf_file: Path):
     organ_df = pd.read_hdf(hdf_file, 'organ')
     cluster_df = pd.read_hdf(hdf_file, 'cluster')
@@ -52,16 +68,8 @@ def make_pval_adata(hdf_file: Path):
         adata[grouping, var_id] = value
     return adata
 
-def main(h5ad_file: Path, hdf_file: Path):
-    adata = anndata.read_h5ad(h5ad_file)
-    cell_id_list = [get_sequencing_cell_id(adata.obs["dataset"][i], adata.obs["barcode"][i]) for i in adata.obs.index]
-    adata.obs["cell_id"] = pd.Series(cell_id_list, index=adata.obs.index)
-
-    X = csr_matrix(adata.X)
-    obs = pd.DataFrame(index=adata.obs["cell_id"])
-    var = pd.DataFrame(index=adata.var.index)
-
-    min_adata = anndata.AnnData(X=X, obs=obs, var=var)
+def main(csv_file: Path, hdf_file: Path):
+    min_adata = make_minimal_adata(csv_file)
     min_adata.write_h5ad("atac.h5ad")
 
     pval_adata = make_pval_adata(hdf_file)

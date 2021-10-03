@@ -8,11 +8,17 @@ hints:
 baseCommand: /opt/make_minimal_anndata.py
 
 inputs:
-  concatenated_file:
+  csv_file:
     type: File
-    doc: h5ad file containing batch corrected RNA seq data
+    doc: csv file containing cell by gene ATAC seq data
     inputBinding:
       position: 1
+
+  hdf_file:
+    type: File
+    doc: hdf file containing p value ATAC seq data
+    inputBinding:
+      position: 2
 
 outputs:
   h5ad_file:
