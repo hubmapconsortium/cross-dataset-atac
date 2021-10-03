@@ -5,7 +5,7 @@ label: Finds marker genes associated with different groupings in atac-seq data
 hints:
   DockerRequirement:
     dockerPull: hubmap/cross-dataset-atac:latest
-baseCommand: /opt/marker_genes.py
+baseCommand: /opt/precompute_percentages.py
 
 inputs:
   concatenated_annotated_file:
