@@ -3,7 +3,7 @@ import anndata
 import pandas as pd
 from argparse import ArgumentParser
 from pathlib import Path
-from cross_dataset_common import get_pval_dfs, make_quant_df, create_minimal_dataset, precompute_dataset_percentages
+from cross_dataset_common import get_pval_dfs, make_quant_df, create_minimal_dataset, precompute_dataset_percentages, make_minimal_adata
 from concurrent.futures import ThreadPoolExecutor
 
 def annotate_genes(adata):
@@ -25,34 +25,30 @@ def main(concatenated_annotated_file: Path, old_cluster_file:Path):
     cell_df["clusters"] = cell_df['leiden']
     cell_df = cell_df[['cell_id', 'barcode', 'dataset', 'organ', 'modality', 'clusters']]
 
-    quant_df = make_quant_df(adata)
-    print(type(quant_df))
-    quant_df.to_csv('atac.csv')
-
-#    gene_df = annotate_genes(adata)
+    gene_df = annotate_genes(adata)
 
     organ_df, cluster_df = get_pval_dfs(adata)
 
     dataset_adatas = [adata[adata.obs['dataset'] == dataset] for dataset in adata.obs['dataset'].unique()]
-#    with ThreadPoolExecutor(max_workers=len(dataset_adatas)) as e:
-#         percentage_dfs = e.map(precompute_dataset_percentages, dataset_adatas)
+    with ThreadPoolExecutor(max_workers=len(dataset_adatas)) as e:
+         percentage_dfs = e.map(precompute_dataset_percentages, dataset_adatas)
 
-#    percentage_df = pd.concat(percentage_dfs)
+    percentage_df = pd.concat(percentage_dfs)
 
-#    with pd.HDFStore(old_cluster_file) as store:
-#        cluster_df = store.get('cluster')
+    with pd.HDFStore(old_cluster_file) as store:
+        cluster_df = store.get('cluster')
 
-    cluster_df = pd.read_hdf(old_cluster_file, 'cluster')
+    minimal_adata = make_minimal_adata(adata, "atac")
+    minimal_adata.write('atac.h5ad')
 
     with pd.HDFStore('atac.hdf5') as store:
         store.put('cell', cell_df, format='t')
         store.put('organ', organ_df)
         store.put('cluster', cluster_df)
-#        store.put('percentages', percentage_df)
-#        store.put('gene', gene_df)
+        store.put('gene', gene_df)
 
-    create_minimal_dataset(cell_df, quant_df, organ_df, cluster_df, 'atac')
-
+    with pd.HDFStore('atac_precompute.hdf5') as store:
+        store.put('percentages', percentage_df)
 
 if __name__ == '__main__':
     p = ArgumentParser()
