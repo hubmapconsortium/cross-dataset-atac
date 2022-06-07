@@ -6,6 +6,10 @@ label: Pipeline for parsing and aggregating atac output across datasets
 
 inputs:
 
+  enable_manhole:
+    label: "Whether to enable remote debugging via 'manhole'"
+    type: boolean?
+
   data_directories:
     label: "List of containing h5ad data files"
     type: Directory[]
@@ -44,6 +48,8 @@ steps:
 
   - id: annotate-concatenate
     in:
+      - id: enable_manhole
+        source: enable_manhole
       - id: data_directories
         source: data_directories
       - id: nexus_token
@@ -59,6 +65,8 @@ steps:
 
   - id: marker-genes
     in:
+      - id: enable_manhole
+        source: enable_manhole
       - id: concatenated_annotated_file
         source: annotate-concatenate/concatenated_annotated_file
       - id: old_cluster_file
